@@ -2,9 +2,11 @@
 
 > 安全边界：本工具只下载并解包候选产物，静态解析 JSON/YAML 和源码文本。它不安装插件、不执行候选代码或 install scripts，也不修改 DSH profile。网络候选只写入 `mkdtemp` 临时目录，用完即删。
 
-`dsh-preflight` 在安装 DeepSeek Harness（DSH）插件前预演 entry、service、config、依赖和产物冲突。它只说明“已实现规则是否发现问题”，不提供安全性证明。
+`dsh-preflight` 做两件事：**装之前**预演 entry、service、config、依赖和产物冲突；**出问题之后**读 DSH 日志把根因翻译成结论。
 
-本项目不实现 daemon 和自动修复：所有输出都是只读结论，需要改动时由你自己执行给出的命令。
+两种场景都不止于报告问题——`audit` 会给出可直接复制执行的 `dsh plugin` 命令，`explain` 的每条结论也带处置建议。**命令由你自己敲**：工具不动手，这样它才敢下载并解析陌生插件的产物。
+
+它只说明“已实现规则是否发现问题”，不提供安全性证明。不实现 daemon 和后台自动修复。
 
 ## 要求
 
