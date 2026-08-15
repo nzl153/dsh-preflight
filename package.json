@@ -1,0 +1,48 @@
+{
+  "name": "dsh-preflight",
+  "version": "0.1.0",
+  "description": "Pre-install conflict simulation for DeepSeek Harness plugins",
+  "type": "module",
+  "bin": {
+    "dsh-preflight": "./lib/cli.js"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js",
+    "check": "pnpm typecheck && pnpm build && pnpm test"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "preflight"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "semver": "^7.7.2"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.0.0",
+    "@types/semver": "^7.7.0",
+    "typescript": "^5.9.3"
+  }
+}

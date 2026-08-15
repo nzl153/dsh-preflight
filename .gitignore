@@ -1,0 +1,7 @@
+node_modules/
+lib/
+.test-dist/
+docs/
+.dsh-memory/
+*.tgz
+*.log
