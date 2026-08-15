@@ -2,21 +2,28 @@ import path from "node:path";
 import semver from "semver";
 import { readJson } from "../io.js";
 import { resolveInstalledPackage } from "../profile.js";
+import { quoteArg } from "../report.js";
 import type { Finding, PackageJson, ProfileSnapshot } from "../types.js";
 
 const BUILT_IN_BUNDLES = new Set(["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app"]);
 
-export async function auditProfile(profile: ProfileSnapshot): Promise<Finding[]> {
+export async function auditProfile(profile: ProfileSnapshot, profileName = "web"): Promise<Finding[]> {
   const findings: Finding[] = [];
   const bundleSet = new Set(profile.bundles);
   for (const bundle of profile.bundles) {
-    if (!BUILT_IN_BUNDLES.has(bundle) && !profile.dependencies[bundle]) findings.push({
+    const dependencyMissing = !BUILT_IN_BUNDLES.has(bundle) && !profile.dependencies[bundle];
+    const packageMissing = !profile.resolvedPackages[bundle];
+    const remediation = dependencyMissing && packageMissing
+      ? `dsh plugin --profile ${quoteArg(profileName)} remove ${quoteArg(bundle)}`
+      : undefined;
+    if (dependencyMissing) findings.push({
       id: "BUNDLES_DEPS_DRIFT", level: "BLOCK", category: "profile",
       title: `bundles 含有 dependencies 中不存在的包：${bundle}`,
       detail: "profile 声明会尝试加载该 bundle，但包管理器状态不再对应。",
-      evidence: profile.profilePackageFile
+      evidence: profile.profilePackageFile,
+      ...(remediation ? { remediation } : {})
     });
-    if (!profile.resolvedPackages[bundle]) findings.push({
+    if (packageMissing) findings.push({
       id: "BUNDLES_DEPS_DRIFT", level: "BLOCK", category: "profile",
       title: `bundle 当前不可解析：${bundle}`, detail: "安装根和 profile node_modules 都找不到 package.json。",
       evidence: profile.profilePackageFile

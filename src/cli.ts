@@ -5,6 +5,7 @@ import os from "node:os";
 import { pathToFileURL } from "node:url";
 import { analyzeCandidate, analyzeProfile, diffCandidate } from "./analyze.js";
 import { renderDiff } from "./diff.js";
+import { explainRuntime } from "./explain.js";
 import { renderReport, reportExitCode } from "./report.js";
 import { parseSourceSpec } from "./source-spec.js";
 
@@ -34,6 +35,16 @@ export async function runCli(args: string[], runtime: CliRuntime = {}): Promise<
       out(parsed.json ? JSON.stringify(report, null, 2) : renderReport(report));
       return reportExitCode(report, parsed.strict);
     }
+    if (parsed.command === "explain") {
+      const report = await explainRuntime({
+        profileDir: parsed.profileDir,
+        installRoot: parsed.installRoot,
+        profileName: parsed.profileName,
+        ...(parsed.logFile ? { logFile: parsed.logFile } : {})
+      });
+      out(parsed.json ? JSON.stringify(report, null, 2) : renderReport(report));
+      return reportExitCode(report, parsed.strict);
+    }
     if (!parsed.source) throw new Error(`${parsed.command} 缺少 <plugin>。`);
     const source = parseSourceSpec(parsed.source);
     if (parsed.command === "diff") {
@@ -51,8 +62,9 @@ export async function runCli(args: string[], runtime: CliRuntime = {}): Promise<
 }
 
 interface ParsedArgs {
-  command: "check" | "audit" | "diff";
+  command: "check" | "audit" | "diff" | "explain";
   source?: string;
+  logFile?: string;
   profileName: string;
   profileDir: string;
   installRoot: string;
@@ -67,7 +79,7 @@ function parseArgs(args: string[], env: NodeJS.ProcessEnv): ParsedArgs {
     return defaults(env, "check", true);
   }
   const command = args[0];
-  if (command !== "check" && command !== "audit" && command !== "diff") throw new Error("未知命令：" + command);
+  if (command !== "check" && command !== "audit" && command !== "diff" && command !== "explain") throw new Error("未知命令：" + command);
   const result = defaults(env, command, false);
   let explicitProfileDir: string | undefined;
   let explicitDshHome: string | undefined;
@@ -79,6 +91,7 @@ function parseArgs(args: string[], env: NodeJS.ProcessEnv): ParsedArgs {
     else if (token === "--help" || token === "-h") result.help = true;
     else if (token === "--profile") result.profileName = requireValue(args, ++index, token);
     else if (token === "--profile-dir") explicitProfileDir = path.resolve(requireValue(args, ++index, token));
+    else if (token === "--log") result.logFile = path.resolve(requireValue(args, ++index, token));
     else if (token === "--dsh-root") result.installRoot = path.resolve(requireValue(args, ++index, token));
     else if (token === "--dsh-home") {
       explicitDshHome = path.resolve(requireValue(args, ++index, token));
@@ -91,6 +104,7 @@ function parseArgs(args: string[], env: NodeJS.ProcessEnv): ParsedArgs {
   if (!/^(?!\.{1,2}$)[A-Za-z0-9._-]+$/.test(result.profileName)) {
     throw new Error("profile 名只能包含字母、数字、点、下划线和短横线；路径请使用 --profile-dir。");
   }
+  if (result.logFile && result.command !== "explain") throw new Error("--log 只能用于 explain 命令。");
   result.profileDir = explicitProfileDir ?? path.join(dshHome, "profiles", result.profileName);
   return result;
 }
@@ -121,6 +135,7 @@ const HELP = `dsh-preflight - DSH 插件安装前冲突预演（不安装、不�
   dsh-preflight check <plugin> [options]
   dsh-preflight diff <plugin> [options]
   dsh-preflight audit [options]
+  dsh-preflight explain [options]
 
 options:
   --profile <name>       profile 名，默认 web
@@ -128,6 +143,7 @@ options:
   --dsh-root <path>      DSH 安装根，默认 E:\\dsh
   --dsh-home <path>      DSH_HOME
   --registry <url>       npm registry
+  --log <path>           explain 只分析指定日志
   --json                 输出 JSON
   --strict               WARN 也返回退出码 1`;
 

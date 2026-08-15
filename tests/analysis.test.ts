@@ -67,9 +67,14 @@ test("audit blocks bundles/dependencies drift", async () => {
     await fs.mkdir(install, { recursive: true });
     await writeJson(path.join(profileDir, "package.json"), { dependencies: {}, dsh: { profile: { bundles: ["stale-a", "stale-b", "stale-c"] } } });
     const profile = await snapshotProfile(profileDir, install);
-    const findings = await auditProfile(profile);
+    const findings = await auditProfile(profile, "profile with spaces");
     assert.ok(findings.some((item) => item.id === "BUNDLES_DEPS_DRIFT" && item.level === "BLOCK"));
     for (const name of ["stale-a", "stale-b", "stale-c"]) assert.ok(findings.some((item) => item.title.includes(name)));
+    for (const name of ["stale-a", "stale-b", "stale-c"]) {
+      const related = findings.filter((item) => item.title.includes(name));
+      assert.equal(related.filter((item) => item.remediation).length, 1);
+      assert.match(related.find((item) => item.remediation)?.remediation ?? "", new RegExp(`--profile \\\"profile with spaces\\\" remove ${name}`));
+    }
   } finally { await removeTempDir(root); }
 });
 

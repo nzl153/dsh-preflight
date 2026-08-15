@@ -1,7 +1,7 @@
 import type { Finding } from "./types.js";
 
 export interface Report {
-  command: "check" | "audit";
+  command: "check" | "audit" | "explain";
   subject: string;
   verdict: "BLOCK" | "REVIEW" | "CLEAR";
   summary: { block: number; warn: number; info: number; unknown: number };
@@ -11,7 +11,7 @@ export interface Report {
 
 const LEVEL_WEIGHT: Record<Finding["level"], number> = { BLOCK: 0, WARN: 1, UNKNOWN: 2, INFO: 3 };
 
-export function createReport(command: "check" | "audit", subject: string, findings: Finding[], installCommand?: string): Report {
+export function createReport(command: Report["command"], subject: string, findings: Finding[], installCommand?: string): Report {
   const sorted = [...findings].sort((a, b) => LEVEL_WEIGHT[a.level] - LEVEL_WEIGHT[b.level] || a.id.localeCompare(b.id));
   const summary = {
     block: sorted.filter((item) => item.level === "BLOCK").length,
@@ -29,22 +29,35 @@ export function reportExitCode(report: Report, strict: boolean): number {
 }
 
 export function renderReport(report: Report): string {
-  const first = report.verdict === "BLOCK"
+  const first = report.command === "explain"
+    ? report.verdict === "BLOCK"
+      ? `✗ 日志显示 DSH 存在阻塞问题：${report.subject}`
+      : report.verdict === "REVIEW"
+        ? `! 日志中有无法归类的问题：${report.subject}`
+        : `✓ 日志中未发现已识别的阻塞问题：${report.subject}`
+    : report.verdict === "BLOCK"
     ? `✗ 不建议${report.command === "check" ? "安装 " : "继续使用 "}${report.subject}`
     : report.verdict === "REVIEW"
       ? `! 未发现 BLOCK，但需要人工复核 ${report.subject}`
       : `✓ 未发现已实现规则中的 BLOCK：${report.subject}`;
   const lines = [first, "  这不是安全性证明；候选代码从未被执行。", ""];
+  const renderedRemediations = new Set<string>();
   if (report.findings.length === 0) lines.push("  无 finding。", "");
   for (const finding of report.findings) {
     lines.push(`  [${finding.level}] ${finding.id} — ${finding.title}`);
     lines.push(`    ${finding.detail}`);
     lines.push(`    证据: ${finding.evidence}`);
     if (finding.consequence) lines.push(`    后果: ${finding.consequence}`);
-    if (finding.remediation) lines.push(`    建议: ${finding.remediation}`);
+    if (finding.remediation && (report.command !== "audit" || !renderedRemediations.has(finding.remediation))) {
+      lines.push(`    建议: ${finding.remediation}`);
+      renderedRemediations.add(finding.remediation);
+    }
     lines.push("");
   }
   if (report.installCommand) lines.push(`  装的话执行: ${report.installCommand}`);
+  if (report.command === "audit") {
+    if (renderedRemediations.size > 0) lines.push(`  共 ${renderedRemediations.size} 条可执行处方，请自行确认后执行`);
+  }
   return lines.join("\n").trimEnd();
 }
 
@@ -52,7 +65,7 @@ export function makeInstallCommand(profileName: string, installSpec: string): st
   return `dsh plugin --profile ${quoteArg(profileName)} add ${quoteArg(installSpec)}`;
 }
 
-function quoteArg(value: string): string {
+export function quoteArg(value: string): string {
   if (!/[\s#&|<>^()]/.test(value)) return value;
   return `"${value.replace(/"/g, '\\"')}"`;
 }

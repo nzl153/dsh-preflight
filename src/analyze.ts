@@ -37,7 +37,7 @@ export async function analyzeCandidate(source: SourceSpec, options: AnalysisOpti
 
 export async function analyzeProfile(options: AnalysisOptions): Promise<Report> {
   const profile = await snapshotProfile(options.profileDir, options.installRoot);
-  return createReport("audit", options.profileName, await auditProfile(profile));
+  return createReport("audit", options.profileName, await auditProfile(profile, options.profileName));
 }
 
 export async function diffCandidate(source: SourceSpec, options: AnalysisOptions): Promise<CandidateDiff> {

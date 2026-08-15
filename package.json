@@ -1,7 +1,7 @@
 {
   "name": "dsh-preflight",
-  "version": "0.1.0",
-  "description": "Pre-install conflict simulation for DeepSeek Harness plugins",
+  "version": "0.2.0",
+  "description": "Pre-install conflict simulation and runtime log diagnostics for DeepSeek Harness plugins",
   "type": "module",
   "bin": {
     "dsh-preflight": "./lib/cli.js"
@@ -29,7 +29,9 @@
     "dsh",
     "dsh-plugin",
     "deepseek-harness",
-    "preflight"
+    "preflight",
+    "diagnostics",
+    "log-analysis"
   ],
   "license": "MIT",
   "engines": {

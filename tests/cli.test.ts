@@ -50,3 +50,21 @@ test("CLI usage errors return 2", async () => {
   assert.equal(await runCli(["audit", "--profile", ".."], { stdout() {}, stderr: (text) => errors.push(text) }), 2);
   assert.match(errors.at(-1) ?? "", /profile 名/);
 });
+
+test("CLI explain treats missing logs as INFO with exit code 0", async () => {
+  const root = await makeTempDir();
+  const output: string[] = [];
+  try {
+    const profile = path.join(root, "profile");
+    const install = path.join(root, "install");
+    await fs.mkdir(install, { recursive: true });
+    await writeJson(path.join(profile, "package.json"), { dependencies: {}, dsh: { profile: { bundles: [] } } });
+    const code = await runCli(["explain", "--log", path.join(root, "missing.log"), "--profile-dir", profile, "--dsh-root", install, "--json"], {
+      stdout: (text) => output.push(text), stderr() {}
+    });
+    assert.equal(code, 0);
+    const report = JSON.parse(output.join("\n")) as { command: string; findings: Array<{ level: string }> };
+    assert.equal(report.command, "explain");
+    assert.equal(report.findings[0]?.level, "INFO");
+  } finally { await removeTempDir(root); }
+});

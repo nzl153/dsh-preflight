@@ -1,6 +1,6 @@
 export type FindingLevel = "BLOCK" | "WARN" | "INFO" | "UNKNOWN";
 
-export type FindingCategory = "conflict" | "installability" | "source" | "profile";
+export type FindingCategory = "conflict" | "installability" | "source" | "profile" | "runtime";
 
 export interface Finding {
   id: string;

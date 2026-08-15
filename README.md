@@ -35,6 +35,16 @@ dsh-preflight audit
 dsh-preflight diff dsh-web-search-pro --json
 ```
 
+```bash
+dsh-preflight explain
+```
+
+```bash
+dsh-preflight explain --log "D:\logs\dsh.err.log" --json
+```
+
+`explain` 默认读取 DSH 安装根下的 `dsh.err.log`、`dsh.log`、`dsh.restart.log` 和 `launch-trace.log`。每个文件只读取尾部 2 MiB。日志不存在或为空时正常返回 INFO。
+
 常用参数：
 
 - `--profile <name>`：profile 名，默认 `web`
@@ -42,6 +52,7 @@ dsh-preflight diff dsh-web-search-pro --json
 - `--dsh-root <path>`：覆盖 DSH 安装根
 - `--dsh-home <path>`：覆盖 `.dsh` 根目录
 - `--registry <url>`：覆盖 npm registry
+- `--log <path>`：`explain` 只分析指定日志
 - `--json`：输出机器可读 JSON
 - `--strict`：存在 WARN 时也返回退出码 1
 
@@ -63,6 +74,18 @@ dsh-preflight diff dsh-web-search-pro --json
 | `BUNDLES_DEPS_DRIFT` | BLOCK | profile 的 bundles、dependencies 与磁盘状态漂移 |
 | `UNMET_PEER` | WARN | 当前 profile 的 peer 缺失或版本不匹配 |
 
+## 运行时日志模式
+
+| Finding | 级别 | 含义 |
+|---|---:|---|
+| `PORT_ALREADY_IN_USE` | BLOCK | 端口被旧进程占用，新实例未启动，插件错误是连锁表象 |
+| `BUNDLE_UNRESOLVED_AT_BOOT` | BLOCK | 启动时无法解析 bundle；会与 profile 交叉判断卸载残骸 |
+| `ENTRY_ID_COLLISION_AT_BOOT` | BLOCK | 启动日志显示 entry id 被重复注册或覆盖 |
+| `MODULE_ENTRY_MISSING` | BLOCK | 已安装包的内部入口文件不在发布产物中 |
+| `UNRECOGNIZED_ERROR` | UNKNOWN | 日志有错误，但确定性规则无法归类 |
+| `NO_LOGS_TO_ANALYZE` | INFO | 默认日志或指定日志不存在、为空 |
+| `NO_RECOGNIZED_RUNTIME_ERROR` | INFO | 日志有内容，但没有匹配到错误或已实现模式 |
+
 ## 退出码
 
 - `0`：没有 BLOCK；默认允许 WARN
@@ -77,6 +100,7 @@ dsh-preflight diff dsh-web-search-pro --json
 - YAML 的 `!!js` 只保留为字符串，绝不求值。
 - service provider 只使用显式 manifest 声明；信息不足时报告 UNKNOWN。
 - 源码扫描是有上限的正则匹配，只列事实，不判断恶意与否。
+- 日志分析只读取文件尾部，不查询端口或进程。处方只作为命令文本输出，从不自动执行。
 
 ## 开发
 
