@@ -4,7 +4,7 @@
 
 `dsh-preflight` 在安装 DeepSeek Harness（DSH）插件前预演 entry、service、config、依赖和产物冲突。它只说明“已实现规则是否发现问题”，不提供安全性证明。
 
-插件已经装坏、DSH 无法启动、需要快照或回滚时，请使用互补工具 [astra3294/dsh-doctor](https://github.com/astra3294/dsh-doctor)。本项目不实现恢复、boot probe、daemon 或自动修复。
+本项目不实现 daemon 和自动修复：所有输出都是只读结论，需要改动时由你自己执行给出的命令。
 
 ## 要求
 
