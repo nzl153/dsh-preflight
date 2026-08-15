@@ -92,6 +92,25 @@ dsh-preflight explain --log "D:\logs\dsh.err.log" --json
 - `1`：存在 BLOCK，或 `--strict` 下存在 WARN
 - `2`：参数、下载、解包或基础 profile 读取失败
 
+## 验证状态
+
+规则的可信度并不一致，这里如实标注。
+
+**已在真实故障上验证**（隔离测试台复现 + 真实归档日志）：
+
+- `ENTRY_ID_COLLISION`、`BUNDLES_DEPS_DRIFT`、`ENTRY_MISSING_IN_ARTIFACT`、`UNMET_PEER`
+- `PORT_ALREADY_IN_USE`、`ENTRY_ID_COLLISION_AT_BOOT`、`BUNDLE_UNRESOLVED_AT_BOOT`、`MODULE_ENTRY_MISSING`
+
+**只有单元测试覆盖，尚未在真实场景触发过**：
+
+- `CONFIG_OVERRIDE_SILENT`、`SERVICE_PROVIDER_DUPLICATE`、`BUILD_APPROVAL_REQUIRED`、`VERSION_RANGE_MISMATCH`、`UNPINNED_SOURCE`、`SENSITIVE_API_SURFACE`、`INSTALL_SCRIPT_PRESENT`、`MISSING_BUNDLE_MANIFEST`、`UNRESOLVABLE_AFTER_INSTALL`
+
+**已知局限**：
+
+- `explain` 的日志模式按当前 DSH 版本的措辞编写。DSH 若改动日志文案，相关规则会**静默失效**——不会报错，只是不再命中。
+- 本工具只说明「已实现的规则是否发现问题」，不构成安全性证明，也不能替代人工审阅插件源码。
+- 输出为 CLEAR 只意味着这些规则没有命中，不意味着插件没有问题。
+
 ## 实现边界
 
 - npm 来源读取 registry metadata 和 tarball，并校验可用的 `sha512` integrity。
