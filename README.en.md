@@ -1,5 +1,7 @@
 # dsh-preflight
 
+> **No longer maintained (2026-09).** Since DSH 0.1.7, plugin compatibility is checked on install and startup. This repository is kept as an archive.
+
 English | [中文](README.md)
 
 You install one plugin and DSH won't start. The log scrolls dozens of plugin-load failures, so it looks like everything broke — when the actual cause may be two plugins claiming the same entry id.
